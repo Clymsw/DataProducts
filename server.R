@@ -31,14 +31,20 @@ calcAirDensity <- function(air.temp, air.pressure, air.RH = NA) {
 }
 
 shinyServer(
-  function(input, output) {
+  function(input, output, session) {
     output$temperature <- renderPrint({input$temperature})
     output$pressure <- renderPrint({input$pressure})
     output$humidity <- renderPrint({input$humidity})
     
-    output$density <- renderPrint({
+    output$density <- renderText({
       calcAirDensity(input$temperature, input$pressure, input$humidity)
       })
+    
+    observeEvent(input$resetSTP, {
+      updateNumericInput(session, 'temperature', value = 20)
+      updateNumericInput(session, 'pressure', value = 101325)
+      updateNumericInput(session, 'humidity', value = 0)
+    })
     
   }
   
