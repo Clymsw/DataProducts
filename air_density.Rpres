@@ -1,0 +1,149 @@
+Air Density Calculator
+========================================================
+author: Clym Stock-Williams
+date: December 2015
+font-import: http://fonts.googleapis.com/css?family=Oxygen
+font-family: 'Oxygen'
+
+
+Introduction
+========================================================
+
+This simple GUI allows the user to:
+
+- calculate air density $\big(\rho\big)$ in kg/m^3
+
+by providing the following information:
+
+- air temperature $\big(T\big)$ in degrees Celsius
+- air pressure $\big(p\big)$ in Pascal
+- relative humidity $\big(\phi\big)$ in %
+
+Relative humidity can be left blank if desired.
+
+The Basic Equations (1)
+=========================
+
+If relative humidity is not provided, then the ideal gas law is used:
+
+$$
+\rho = \frac{p}{\big(T+273.15\big)\cdot R_d}
+$$
+
+$R_d=287.058J/(kg\cdot K)$ is the specific gas constant of dry air.
+
+As can be seen, the temperature $\big(T\big)$ must be converted into Kelvin.
+
+The Basic Equations (2)
+=========================
+
+If relative humidity is provided, then the equation for air density has an additional term:
+
+$$
+\rho = \frac{p}{\big(T+273.15\big)\cdot R_d} + \frac{p_v}{\big(T+273.15\big)\cdot R_v}
+$$
+
+$R_v=461.5J/(kg\cdot K)$ is the specific gas constant of water vapour.
+
+The vapour pressure of water $\big(p_v\big)$ can be found from:
+
+$$
+p_v = \phi \cdot 6.1078 \cdot 10^{\frac{7.5T}{T+237.3}}
+$$
+
+Illustration of air density variation
+========================================================
+
+```{r echo=FALSE}
+
+library(ggplot2)
+
+calcAirDensity <- function(air.temp, air.pressure, air.RH = NA) {
+  #air.temp in degrees Celsius
+  #air.pressure in Pascal
+  #air.RH in % (if not entered, not used)
+  
+  ## Constants
+  constant.Kelvin <- 273.15
+  constant.DryAir <- 287.058
+  constant.WaterVapour <- 461.5
+  
+  if (is.na(air.RH)) {
+    # Relative Humidity not specified
+    air.temp <- air.temp + constant.Kelvin
+    air.density <- air.pressure / (constant.DryAir * air.temp)
+    
+  } else {
+    # Use RH correction
+    
+    tmp.exponent <- (7.5*air.temp) / (air.temp + 237.3)
+    air.vapourpressure <- air.RH * 6.1078 * (10^tmp.exponent)
+    
+    air.temp <- air.temp + constant.Kelvin
+    
+    air.density <- (air.pressure-air.vapourpressure) / (constant.DryAir*air.temp)
+    air.density <- air.density + (air.vapourpressure/(constant.WaterVapour*air.temp))
+    
+  }
+  
+  return(air.density)
+  
+}
+
+t_vals <- 5:5:40
+
+ggplot() + geom_line(aes(t_vals, calcAirDensity(t_vals, 101325), colour="0%")) + 
+  geom_line(aes(t_vals, calcAirDensity(t_vals, 101325, 100), colour="100%")) + 
+  labs(x="Air Temperature", y="Air Density") +
+  scale_colour_manual(name="Relative Humidity", values = c("blue","green"))
+
+```
+
+<div align=center> Air pressure is held constant at $101325 Pa$ </div>
+
+***
+
+```{r echo=FALSE}
+
+calcAirDensity <- function(air.temp, air.pressure, air.RH = NA) {
+  #air.temp in degrees Celsius
+  #air.pressure in Pascal
+  #air.RH in % (if not entered, not used)
+  
+  ## Constants
+  constant.Kelvin <- 273.15
+  constant.DryAir <- 287.058
+  constant.WaterVapour <- 461.5
+  
+  if (is.na(air.RH)) {
+    # Relative Humidity not specified
+    air.temp <- air.temp + constant.Kelvin
+    air.density <- air.pressure / (constant.DryAir * air.temp)
+    
+  } else {
+    # Use RH correction
+    
+    tmp.exponent <- (7.5*air.temp) / (air.temp + 237.3)
+    air.vapourpressure <- air.RH * 6.1078 * (10^tmp.exponent)
+    
+    air.temp <- air.temp + constant.Kelvin
+    
+    air.density <- (air.pressure-air.vapourpressure) / (constant.DryAir*air.temp)
+    air.density <- air.density + (air.vapourpressure/(constant.WaterVapour*air.temp))
+    
+  }
+  
+  return(air.density)
+  
+}
+
+p_vals <- 80000:1000:120000
+
+ggplot() + geom_line(aes(p_vals, calcAirDensity(20, p_vals), colour="0%")) + 
+  geom_line(aes(p_vals, calcAirDensity(20, p_vals, 100), colour="100%")) + 
+  labs(x="Air Pressure", y="Air Density") +
+  scale_colour_manual(name="Relative Humidity", values = c("blue","green"))
+
+```
+
+<div align=center> Temperature is held constant at $20^o C$ </div>
